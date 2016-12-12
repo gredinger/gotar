@@ -1,0 +1,5 @@
+# these should all create the same archive
+
+./cli -c test1.tar test
+./cli -c test2.tar test/* test/.a.txt
+cd ../ && ./cli/cli -C cli/ -c test4.tar test
