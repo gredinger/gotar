@@ -2,14 +2,17 @@ package gotar
 
 import (
 	"archive/tar"
+	"compress/gzip"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-	"fmt"
 )
 
 type TarOpts struct {
 	InPaths []string
+	Gzip    bool
+	Verbose bool
 	WorkDir string
 	Writer  io.Writer
 }
@@ -31,14 +34,14 @@ func addFile(tarWriter *tar.Writer, tarHeader *tar.Header, path string) error {
 	return nil
 }
 
-func Tar(to *TarOpts) error {
+func Tar(opts *TarOpts) error {
 	// change working directory
-	if (to.WorkDir != ""){
+	if opts.WorkDir != "" {
 		pwd, err := os.Getwd()
 		if err != nil {
 			return err
 		}
-		err = os.Chdir(to.WorkDir)
+		err = os.Chdir(opts.WorkDir)
 		if err != nil {
 			return err
 		}
@@ -46,10 +49,23 @@ func Tar(to *TarOpts) error {
 	}
 
 	// set the writer
-	tarWriter := tar.NewWriter(to.Writer)
+	var tarWriter *tar.Writer
+	var gzipWriter *gzip.Writer
+	if opts.Gzip {
+		gzipWriter = gzip.NewWriter(opts.Writer)
+		tarWriter = tar.NewWriter(gzipWriter)
+	} else {
+		tarWriter = tar.NewWriter(opts.Writer)
+	}
+	defer func() {
+		tarWriter.Close()
+		if gzipWriter != nil {
+			gzipWriter.Close()
+		}
+	}()
 
 	// walk the file tree
-	for _, path := range to.InPaths {
+	for _, path := range opts.InPaths {
 		info, err := os.Stat(path)
 		if err != nil {
 			return err
@@ -64,6 +80,9 @@ func Tar(to *TarOpts) error {
 					return err
 				}
 				tarHeader.Name = filepath.Join(filepath.Dir(path), tarHeader.Name)
+				if opts.Verbose {
+					fmt.Println(tarHeader.Name)
+				}
 				if info.IsDir() {
 					err := tarWriter.WriteHeader(tarHeader)
 					if err != nil {
@@ -78,9 +97,11 @@ func Tar(to *TarOpts) error {
 				return nil
 			})
 		} else {
-			fmt.Println(path)
 			tarHeader, err := tar.FileInfoHeader(info, info.Name())
 			tarHeader.Name = filepath.Join(filepath.Dir(path), tarHeader.Name)
+			if opts.Verbose {
+				fmt.Println(tarHeader.Name)
+			}
 			if err != nil {
 				return err
 			}

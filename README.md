@@ -1,14 +1,13 @@
 # gotar
 
-Library to provide access to pure golang implemenations of tar/untar with gzip compression.
+Library to provide access to pure golang implementations of tar/untar with gzip compression.
 Should be useful for cross-platform directory packing and unpacking.
 
-Roadmap:
+Status:
 
 - Tar (alpha)
-- Untar (coming soon)
-- Gzip (coming soon)
-- Ungzip (coming soon)
+- Untar (alpha)
+- Gzip (alpha)
+- Ungzip (alpha)
 
-This library is currenty under active developent and will be changing rapidly.
-
+This library is currently under development and it's API may change.
